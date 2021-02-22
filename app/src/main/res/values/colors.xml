@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="toolbarColorPrimary">#FFFFFF</color>
+    <color name="toolbarColorPrimaryDark">#BED3BE</color>
+    <color name="colorSecondary">#77C87A</color>
+    <color name="mainTabColor">#FFFFFF</color>
+    <color name="colorPrimary">#00C853</color>
+    <color name="colorPrimaryDark">#02AA48</color>
+
+    <color name="secretNameColor">#00C853</color>
+    <color name="disabled_color">#9E9E9E</color>
+
+</resources>
