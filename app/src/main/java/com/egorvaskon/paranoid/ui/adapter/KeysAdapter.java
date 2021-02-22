@@ -63,7 +63,7 @@ public class KeysAdapter extends BaseRecyclerViewAdapterWithSelectableItems<KeyV
             public void onMoved(int fromPosition, int toPosition) { }
 
             @Override
-            public void onChanged(int position, int count, @Nullable Object payload) { }
+            public void onChanged(int position, int count, @Nullable Object payload) {}
         });
 
         diff.dispatchUpdatesTo(this);

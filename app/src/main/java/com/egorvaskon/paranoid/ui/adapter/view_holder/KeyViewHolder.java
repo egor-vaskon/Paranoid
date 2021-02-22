@@ -69,7 +69,7 @@ public class KeyViewHolder extends BaseRecyclerViewAdapterWithSelectableItems.Ba
 
     public void bind(@NonNull Key key){
         mName.setText(key.getName());
-        mQuestion.setText(key.getQuestion());
+        mQuestion.setText(key.getName().equals(key.getQuestion()) ? "" : key.getQuestion());
     }
 
 }
