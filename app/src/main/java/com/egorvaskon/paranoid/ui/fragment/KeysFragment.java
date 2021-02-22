@@ -136,10 +136,16 @@ public class KeysFragment extends Fragment {
     }
 
     private void onItemClick(long id){
-        if(getFragmentManager() != null){
-            EditKeyDialogFragment dialog = EditKeyDialogFragment.newInstance(id);
-            dialog.show(getFragmentManager(), MainActivity.EDIT_QUESTION_FRAGMENT_TAG);
-        }
+        mDisposableManager.pushDisposable(mKeysViewModel
+                .getKey(id)
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(key -> {
+            if(getFragmentManager() != null){
+                EditKeyDialogFragment dialog = EditKeyDialogFragment.newInstance(key.getId(),key.getName(),key.getQuestion());
+                dialog.show(getFragmentManager(), MainActivity.EDIT_QUESTION_FRAGMENT_TAG);
+            }
+        }));
     }
 
     @NonNull

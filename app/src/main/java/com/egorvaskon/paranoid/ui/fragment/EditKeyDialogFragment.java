@@ -23,6 +23,8 @@ import com.google.android.material.textfield.TextInputEditText;
 public class EditKeyDialogFragment extends DialogFragment {
 
     private static final String ARG_ID = "arg_id";
+    private static final String ARG_NAME = "arg_name";
+    private static final String ARG_QUESTION = "arg_question";
 
     private long mKeyId;
     private boolean mCreate = true;
@@ -32,9 +34,11 @@ public class EditKeyDialogFragment extends DialogFragment {
 
     //If you want to edit existing key.
     @NonNull
-    public static EditKeyDialogFragment newInstance(long id){
+    public static EditKeyDialogFragment newInstance(long id,@NonNull String name,@NonNull String question){
         Bundle args = new Bundle();
         args.putLong(ARG_ID,id);
+        args.putString(ARG_NAME,name);
+        args.putString(ARG_QUESTION,question);
 
         EditKeyDialogFragment fragment = new EditKeyDialogFragment();
         fragment.setArguments(args);
@@ -105,17 +109,19 @@ public class EditKeyDialogFragment extends DialogFragment {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                flags[0] = !editable.toString().isEmpty();
+                if(getDialog() != null && getDialog().isShowing()){
+                    flags[0] = !editable.toString().isEmpty();
 
-                if(flags[0] && (question.getText() == null
-                        || question.getText().toString().isEmpty()
-                        || !mHasUserEditedQuestion)){
-                    flags[1] = true;
-                    mIgnoreQuestionEditedEvent = true;
-                    question.setText(editable);
+                    if(flags[0] && (question.getText() == null
+                            || question.getText().toString().isEmpty()
+                            || !mHasUserEditedQuestion)){
+                        flags[1] = true;
+                        mIgnoreQuestionEditedEvent = true;
+                        question.setText(editable);
+                    }
+
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(flags[0] && flags[1]);
                 }
-
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(flags[0] && flags[1]);
             }
         });
 
@@ -133,16 +139,23 @@ public class EditKeyDialogFragment extends DialogFragment {
 
             @Override
             public void afterTextChanged(Editable editable) {
-                flags[1] = !editable.toString().isEmpty();
+                if(getDialog() != null && getDialog().isShowing()){
+                    flags[1] = !editable.toString().isEmpty();
 
-                dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(flags[0] && flags[1]);
+                    dialog.getButton(AlertDialog.BUTTON_POSITIVE).setEnabled(flags[0] && flags[1]);
 
-                if(!mIgnoreQuestionEditedEvent)
-                    mHasUserEditedQuestion = true;
+                    if(!mIgnoreQuestionEditedEvent)
+                        mHasUserEditedQuestion = true;
 
-                mIgnoreQuestionEditedEvent = false;
+                    mIgnoreQuestionEditedEvent = false;
+                }
             }
         });
+
+        if(!mCreate){
+            name.setText(getArguments().getString(ARG_NAME,""));
+            question.setText(getArguments().getString(ARG_QUESTION,""));
+        }
 
         return dialog;
     }

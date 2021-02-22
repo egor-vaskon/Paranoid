@@ -1,8 +1,14 @@
 package com.egorvaskon.paranoid;
 
+import android.app.Activity;
+
+import androidx.annotation.IdRes;
 import androidx.annotation.NonNull;
 import androidx.fragment.app.DialogFragment;
+import androidx.fragment.app.Fragment;
+import androidx.fragment.app.FragmentActivity;
 import androidx.fragment.app.FragmentManager;
+import androidx.fragment.app.FragmentTransaction;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,6 +35,18 @@ public final class Utils {
             return (ArrayList<T>)list;
         else
             return new ArrayList<>(list);
+    }
+
+    public static void addOrReplaceFragment(@NonNull FragmentActivity activity,@NonNull Fragment fragment, @IdRes int container){
+        FragmentManager fm = activity.getSupportFragmentManager();
+        FragmentTransaction transaction = fm.beginTransaction();
+
+        if(fm.findFragmentById(container) != null)
+            transaction.replace(container,fragment);
+        else
+            transaction.add(container,fragment);
+
+        transaction.commit();
     }
 
 }

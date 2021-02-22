@@ -19,6 +19,7 @@ import com.egorvaskon.paranoid.DisposableManager;
 import com.egorvaskon.paranoid.Key;
 import com.egorvaskon.paranoid.R;
 import com.egorvaskon.paranoid.Secret;
+import com.egorvaskon.paranoid.Utils;
 import com.egorvaskon.paranoid.ui.fragment.ContentLoadingFragment;
 import com.egorvaskon.paranoid.ui.fragment.EditSecretFragment;
 import com.egorvaskon.paranoid.ui.fragment.QuizDialog;
@@ -144,18 +145,13 @@ public class EditSecretActivity extends AppCompatActivity {
 
         EditSecretFragment fragment = new EditSecretFragment();
 
-        getSupportFragmentManager().beginTransaction()
-                .add(R.id.fragment_container,fragment)
-                .commit();
+        Utils.addOrReplaceFragment(this,fragment,R.id.fragment_container);
     }
 
     private void initAsEditSecretActivity(){
         ArrayList<String> answers = getIntent().getExtras().getStringArrayList(EXTRA_ANSWERS);
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .add(R.id.fragment_container,new ContentLoadingFragment())
-                .commit();
+        Utils.addOrReplaceFragment(this,new ContentLoadingFragment(),R.id.fragment_container);
 
         Disposable d = decodeSecret(mSecretId,answers)
                 .subscribeOn(Schedulers.io())
@@ -163,10 +159,7 @@ public class EditSecretActivity extends AppCompatActivity {
                 .subscribe(secret -> {
                     EditSecretFragment fragment = EditSecretFragment.newInstance(secret);
 
-                    getSupportFragmentManager()
-                            .beginTransaction()
-                            .replace(R.id.fragment_container,fragment)
-                            .commit();
+                    Utils.addOrReplaceFragment(this,fragment,R.id.fragment_container);
                 },err -> {
                     Intent intent = new Intent(this,MainActivity.class);
                     intent.putExtra(MainActivity.EXTRA_SHOW_MESSAGE_DIALOG,R.string.decoding_failed);
@@ -293,9 +286,6 @@ public class EditSecretActivity extends AppCompatActivity {
 
         mDisposableManager.pushDisposable(d);
 
-        getSupportFragmentManager()
-                .beginTransaction()
-                .replace(R.id.fragment_container,new ContentLoadingFragment())
-                .commit();
+        Utils.addOrReplaceFragment(this,new ContentLoadingFragment(),R.id.fragment_container);
     }
 }

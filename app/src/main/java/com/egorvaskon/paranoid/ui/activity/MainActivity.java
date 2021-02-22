@@ -20,9 +20,6 @@ import androidx.viewpager.widget.ViewPager;
 
 import android.view.Menu;
 import android.view.MenuItem;
-
-import java.util.Random;
-
 public class MainActivity extends AppCompatActivity {
 
     public static final String CREATE_QUESTION_FRAGMENT_TAG = "create_question_fm_tag_1231";
