@@ -25,7 +25,7 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String CREATE_QUESTION_FRAGMENT_TAG = "create_question_fm_tag_123";
+    public static final String CREATE_QUESTION_FRAGMENT_TAG = "create_question_fm_tag_1231";
     public static final String EDIT_QUESTION_FRAGMENT_TAG = "edit_question_fm_tag_556";
     public static final String MESSAGE_DIALOG_TAG = "msg_dialog_tag_165";
 
