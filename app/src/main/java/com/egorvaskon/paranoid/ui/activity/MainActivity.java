@@ -25,9 +25,9 @@ import java.util.Random;
 
 public class MainActivity extends AppCompatActivity {
 
-    public static final String CREATE_QUESTION_FRAGMENT_TAG = "create_question_fm_tag";
-    public static final String EDIT_QUESTION_FRAGMENT_TAG = "edit_question_fm_tag";
-    public static final String MESSAGE_DIALOG_TAG = "msg_dialog_tag";
+    public static final String CREATE_QUESTION_FRAGMENT_TAG = "create_question_fm_tag_123";
+    public static final String EDIT_QUESTION_FRAGMENT_TAG = "edit_question_fm_tag_556";
+    public static final String MESSAGE_DIALOG_TAG = "msg_dialog_tag_165";
 
     public static final String EXTRA_SHOW_MESSAGE_DIALOG = "extra_flag_show_message_dialog";
 
@@ -90,7 +90,7 @@ public class MainActivity extends AppCompatActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
+        //int id = item.getItemId();
 
         /*if (id == R.id.action_settings) {
             return true;
