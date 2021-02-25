@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,6 +21,7 @@ import com.egorvaskon.paranoid.Utils;
 import com.egorvaskon.paranoid.ui.activity.EditSecretActivity;
 import com.egorvaskon.paranoid.ui.adapter.BaseRecyclerViewAdapterWithSelectableItems;
 import com.egorvaskon.paranoid.ui.adapter.SecretsAdapter;
+import com.egorvaskon.paranoid.ui.adapter.view_holder.SecretViewHolder;
 import com.egorvaskon.paranoid.ui.viewmodel.KeysViewModel;
 import com.egorvaskon.paranoid.ui.viewmodel.QuizViewModel;
 import com.egorvaskon.paranoid.ui.viewmodel.SecretsViewModel;
@@ -51,6 +53,35 @@ public class SecretsFragment extends Fragment {
     private static final String DECODING_QUIZ = "decoding_quiz_view_model";
     private static final String DECODING_QUIZ_DIALOG_TAG = "decoding_quiz_dialog_tag";
 
+    private ItemTouchHelper.Callback mItemTouchCallback = new ItemTouchHelper.Callback() {
+        @Override
+        public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+            return makeMovementFlags(0,ItemTouchHelper.END);
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public boolean isItemViewSwipeEnabled() {
+            return true;
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
+            return true;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            if(viewHolder instanceof SecretViewHolder){
+                ((SecretViewHolder) viewHolder).remove();
+            }
+        }
+    };
+
     public SecretsFragment(){
 
     }
@@ -70,8 +101,13 @@ public class SecretsFragment extends Fragment {
             mSecretsAdapter = new SecretsAdapter(view.getContext(),true,false);
             LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
 
+            ItemTouchHelper touchHelper = new ItemTouchHelper(mItemTouchCallback);
+
+            touchHelper.attachToRecyclerView(mRecyclerView);
+
             mRecyclerView.setLayoutManager(layoutManager);
             mRecyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(),layoutManager.getOrientation()));
+
             mRecyclerView.setAdapter(mSecretsAdapter);
         }
     }

@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -20,6 +21,7 @@ import com.egorvaskon.paranoid.R;
 import com.egorvaskon.paranoid.ui.activity.MainActivity;
 import com.egorvaskon.paranoid.ui.adapter.BaseRecyclerViewAdapterWithSelectableItems;
 import com.egorvaskon.paranoid.ui.adapter.KeysAdapter;
+import com.egorvaskon.paranoid.ui.adapter.view_holder.SecretViewHolder;
 import com.egorvaskon.paranoid.ui.viewmodel.KeysViewModel;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -36,6 +38,35 @@ public class KeysFragment extends Fragment {
     private RecyclerView mRecyclerView;
     private boolean mDoEnableDeletion = false;
     private boolean mDoEnableSelection = false;
+
+    private ItemTouchHelper.Callback mItemTouchCallback = new ItemTouchHelper.Callback() {
+        @Override
+        public int getMovementFlags(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+            return makeMovementFlags(0,ItemTouchHelper.END);
+        }
+
+        @Override
+        public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+            return false;
+        }
+
+        @Override
+        public boolean isItemViewSwipeEnabled() {
+            return true;
+        }
+
+        @Override
+        public boolean isLongPressDragEnabled() {
+            return true;
+        }
+
+        @Override
+        public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+            if(viewHolder instanceof SecretViewHolder){
+                ((SecretViewHolder) viewHolder).remove();
+            }
+        }
+    };
 
     private KeysViewModel mKeysViewModel;
 
@@ -91,6 +122,12 @@ public class KeysFragment extends Fragment {
             mRecyclerView = (RecyclerView) view;
             mKeysAdapter = new KeysAdapter(view.getContext(), mDoEnableDeletion,mDoEnableSelection);
             LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
+
+            if(mDoEnableDeletion){
+                ItemTouchHelper touchHelper = new ItemTouchHelper(mItemTouchCallback);
+
+                touchHelper.attachToRecyclerView(mRecyclerView);
+            }
 
             mRecyclerView.setLayoutManager(layoutManager);
             mRecyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(),layoutManager.getOrientation()));
