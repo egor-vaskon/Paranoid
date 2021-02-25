@@ -5,7 +5,7 @@
     android:orientation="horizontal"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:padding="15dp"
+    android:padding="20dp"
     android:focusable="true"
     android:clickable="true"
     android:foreground="@drawable/key_background"
@@ -23,15 +23,10 @@
             android:id="@+id/key_checkbox"/>
 
         <LinearLayout
-            android:layout_marginStart="15dp"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="start"
             android:orientation="vertical">
-
-            <Space
-                android:layout_width="wrap_content"
-                android:layout_height="10dp" />
 
             <TextView
                 android:id="@+id/key_name"
@@ -51,16 +46,5 @@
 
         </LinearLayout>
     </LinearLayout>
-
-    <ImageButton
-        android:contentDescription="@string/delete_key"
-        android:id="@+id/delete_key"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="end|center_vertical"
-        android:background="@drawable/round_action_button_bg"
-        android:padding="18dp"
-        android:tint="#585858"
-        android:src="@drawable/ic_baseline_delete_24"/>
 
 </FrameLayout>

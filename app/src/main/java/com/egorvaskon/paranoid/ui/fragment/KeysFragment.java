@@ -12,6 +12,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 import androidx.lifecycle.ViewModelProvider;
 import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -19,7 +20,9 @@ import com.egorvaskon.paranoid.DisposableManager;
 import com.egorvaskon.paranoid.R;
 import com.egorvaskon.paranoid.ui.activity.MainActivity;
 import com.egorvaskon.paranoid.ui.adapter.BaseRecyclerViewAdapterWithSelectableItems;
+import com.egorvaskon.paranoid.ui.adapter.ItemTouchHelperCallbackImpl;
 import com.egorvaskon.paranoid.ui.adapter.KeysAdapter;
+import com.egorvaskon.paranoid.ui.adapter.view_holder.SecretViewHolder;
 import com.egorvaskon.paranoid.ui.viewmodel.KeysViewModel;
 
 import io.reactivex.rxjava3.android.schedulers.AndroidSchedulers;
@@ -91,6 +94,12 @@ public class KeysFragment extends Fragment {
             mRecyclerView = (RecyclerView) view;
             mKeysAdapter = new KeysAdapter(view.getContext(), mDoEnableDeletion,mDoEnableSelection);
             LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
+
+            if(mDoEnableDeletion){
+                ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelperCallbackImpl(mRecyclerView));
+
+                touchHelper.attachToRecyclerView(mRecyclerView);
+            }
 
             mRecyclerView.setLayoutManager(layoutManager);
             mRecyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(),layoutManager.getOrientation()));

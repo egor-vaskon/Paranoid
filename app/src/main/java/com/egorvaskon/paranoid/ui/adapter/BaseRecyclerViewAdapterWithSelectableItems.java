@@ -205,7 +205,7 @@ public abstract class BaseRecyclerViewAdapterWithSelectableItems
         }
 
         public final void remove(){
-            if(getItemId() == RecyclerView.NO_ID)
+            if(getItemId() == RecyclerView.NO_ID && getAdapterPosition() == RecyclerView.NO_POSITION)
                 return;
 
             mAdapterContext.messageStream.onNext(new Message(Message.REMOVE_ITEM,getItemId()));

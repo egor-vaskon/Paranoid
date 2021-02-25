@@ -16,7 +16,6 @@ public class KeyViewHolder extends BaseRecyclerViewAdapterWithSelectableItems.Ba
     private final TextView mName;
     private final TextView mQuestion;
     private final CheckBox mCheckBox;
-    private final ImageButton mDeleteButton;
 
     public KeyViewHolder(@NonNull View itemView, @NonNull BaseRecyclerViewAdapterWithSelectableItems.AdapterContext adapterContext,
                          boolean selectionEnabled,
@@ -27,15 +26,6 @@ public class KeyViewHolder extends BaseRecyclerViewAdapterWithSelectableItems.Ba
 
         mName = itemView.findViewById(R.id.key_name);
         mQuestion = itemView.findViewById(R.id.key_question);
-
-        mDeleteButton = itemView.findViewById(R.id.delete_key);
-        if(deletionEnabled){
-            mDeleteButton.setOnClickListener(v -> remove());
-        }
-        else {
-            mDeleteButton.setEnabled(false);
-            mDeleteButton.setVisibility(View.GONE);
-        }
 
         mCheckBox = itemView.findViewById(R.id.key_checkbox);
         if(selectionEnabled){
@@ -70,6 +60,7 @@ public class KeyViewHolder extends BaseRecyclerViewAdapterWithSelectableItems.Ba
     public void bind(@NonNull Key key){
         mName.setText(key.getName());
         mQuestion.setText(key.getName().equals(key.getQuestion()) ? "" : key.getQuestion());
+        mQuestion.setVisibility(mQuestion.getText().length() > 0 ? View.VISIBLE : View.GONE);
     }
 
 }

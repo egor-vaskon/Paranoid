@@ -28,15 +28,7 @@ public class SecretViewHolder extends BaseRecyclerViewAdapterWithSelectableItems
         itemView.setOnClickListener(view -> sendMessage(BaseRecyclerViewAdapterWithSelectableItems.Message.ITEM_CLICK));
 
         mName = itemView.findViewById(R.id.secret_name);
-        mDeleteButton = itemView.findViewById(R.id.delete_secret);
         mCheckBox = itemView.findViewById(R.id.secret_checkbox);
-
-        if(deletable)
-            mDeleteButton.setOnClickListener(v -> remove());
-        else{
-            mDeleteButton.setEnabled(false);
-            mDeleteButton.setVisibility(View.GONE);
-        }
 
         if(selectable){
             mCheckBox.setOnCheckedChangeListener((btn,checked) -> {
