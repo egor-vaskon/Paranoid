@@ -30,7 +30,7 @@ public class Secret {
 
     @PrimaryKey(autoGenerate = true)
     @ColumnInfo(name = "id")
-    private long mId;
+    private long mId = -1;
 
     @ColumnInfo(name = "keys")
     private List<Long> mKeys = new ArrayList<>();
@@ -43,8 +43,13 @@ public class Secret {
 
     public Secret(){}
 
-    @Ignore
-    public Secret(String name,List<Long> keys) {
+    public Secret(@NonNull String name,@NonNull List<Long> keys){
+        mName = name;
+        mKeys = keys;
+    }
+
+    public Secret(long id,@NonNull String name,@NonNull List<Long> keys){
+        mId = id;
         mName = name;
         mKeys = keys;
     }
@@ -130,9 +135,6 @@ public class Secret {
 
     public void setName(String name) {
         mName = name;
-        if(name == null)
-            mId = 0;
-        else mId = name.hashCode();
     }
 
     public long getId() {

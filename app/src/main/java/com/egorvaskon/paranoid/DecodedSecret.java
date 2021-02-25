@@ -29,6 +29,12 @@ public class DecodedSecret implements Parcelable {
         mKeys = new TreeSet<>(keys);
     }
 
+    public boolean isValid(int minKeyCount){
+        return mName != null && !mName.isEmpty()
+                && mSecret != null && !mSecret.isEmpty()
+                && mKeys != null && (mKeys.size() >= minKeyCount);
+    }
+
     public String getName() {
         return mName;
     }

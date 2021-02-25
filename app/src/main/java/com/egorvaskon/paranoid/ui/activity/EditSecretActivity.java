@@ -1,6 +1,7 @@
 package com.egorvaskon.paranoid.ui.activity;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.content.ContextCompat;
@@ -11,9 +12,11 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.text.SpannableString;
 import android.text.style.ForegroundColorSpan;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 
+import com.egorvaskon.paranoid.Constants;
 import com.egorvaskon.paranoid.DecodedSecret;
 import com.egorvaskon.paranoid.DisposableManager;
 import com.egorvaskon.paranoid.Key;
@@ -39,6 +42,8 @@ import io.reactivex.rxjava3.schedulers.Schedulers;
 
 public class EditSecretActivity extends AppCompatActivity {
 
+    private static final String TAG = "EditSecretActivity";
+
     public static final String EXTRA_SECRET_ID = "extra_secret_id";
     public static final String EXTRA_ANSWERS = "extra_answers";
 
@@ -50,8 +55,6 @@ public class EditSecretActivity extends AppCompatActivity {
 
     private boolean mSaveButtonEnabled = false;
     private boolean mSaveButtonVisible = true;
-
-    private DecodedSecret mDecodedSecret;
 
     private KeysViewModel mKeysViewModel;
     private SecretsViewModel mSecretsViewModel;
@@ -73,27 +76,6 @@ public class EditSecretActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.edit_secret_toolbar);
         setSupportActionBar(toolbar);
 
-        init();
-    }
-
-    @Override
-    protected void onNewIntent(Intent intent) {
-        super.onNewIntent(intent);
-
-        mDisposableManager.dispose();
-        mKeysViewModel = null;
-        mSecretsViewModel = null;
-        mEditSecretViewModel = null;
-        mQuizViewModel = null;
-        mUiHandler = null;
-        mKeys = null;
-        mDecodedSecret = null;
-        mSaveButtonEnabled = false;
-        mSaveButtonVisible = true;
-        mCreate = true;
-        mSecretId = -1;
-
-        invalidateOptionsMenu();
         init();
     }
 
@@ -122,19 +104,19 @@ public class EditSecretActivity extends AppCompatActivity {
         mEditSecretViewModel = vmProvider.get(EditSecretViewModel.class);
 
         if(mCreate)
-            initAsCreateSecretActivity();
+            onSecretDecoded(null);
         else
-            initAsEditSecretActivity();
+            decodeSecret();
     }
 
-    private void initAsCreateSecretActivity(){
+    private void onSecretDecoded(@Nullable DecodedSecret decodedSecret){
         mEditSecretViewModel.getDecodedSecret().observe(this,secret -> {
-            if(secret.getName() != null && !mSaveButtonEnabled){
+            boolean isValid = secret.isValid(Constants.MIN_KEY_COUNT);
+            if(isValid && !mSaveButtonEnabled){
                 mSaveButtonEnabled = true;
-                mDecodedSecret = secret;
                 invalidateOptionsMenu();
             }
-            else if(secret.getName() == null && mSaveButtonEnabled){
+            else if(!isValid && mSaveButtonEnabled){
                 mSaveButtonEnabled = false;
                 invalidateOptionsMenu();
             }
@@ -143,12 +125,17 @@ public class EditSecretActivity extends AppCompatActivity {
         mKeysViewModel.getKeysLiveData().observe(this,keys -> mKeys = keys);
         mQuizViewModel.getAnswers().observe(this,this::onAnswersAvailable);
 
-        EditSecretFragment fragment = new EditSecretFragment();
+        EditSecretFragment fragment;
+
+        if(decodedSecret == null)
+            fragment = new EditSecretFragment();
+        else
+            fragment = EditSecretFragment.newInstance(decodedSecret);
 
         Utils.addOrReplaceFragment(this,fragment,R.id.fragment_container);
     }
 
-    private void initAsEditSecretActivity(){
+    private void decodeSecret(){
         ArrayList<String> answers = getIntent().getExtras().getStringArrayList(EXTRA_ANSWERS);
 
         Utils.addOrReplaceFragment(this,new ContentLoadingFragment(),R.id.fragment_container);
@@ -156,31 +143,12 @@ public class EditSecretActivity extends AppCompatActivity {
         Disposable d = decodeSecret(mSecretId,answers)
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(secret -> {
-                    EditSecretFragment fragment = EditSecretFragment.newInstance(secret);
-
-                    Utils.addOrReplaceFragment(this,fragment,R.id.fragment_container);
-                },err -> {
+                .subscribe(this::onSecretDecoded,err -> {
                     Intent intent = new Intent(this,MainActivity.class);
                     intent.putExtra(MainActivity.EXTRA_SHOW_MESSAGE_DIALOG,R.string.decoding_failed);
 
                     startActivity(intent);
                 });
-
-        mEditSecretViewModel.getDecodedSecret().observe(this,secret -> {
-            if(secret.getName() != null && !mSaveButtonEnabled){
-                mSaveButtonEnabled = true;
-                mDecodedSecret = secret;
-                invalidateOptionsMenu();
-            }
-            else if(secret.getName() == null && mSaveButtonEnabled){
-                mSaveButtonEnabled = false;
-                invalidateOptionsMenu();
-            }
-        });
-
-        mKeysViewModel.getKeysLiveData().observe(this,keys -> mKeys = keys);
-        mQuizViewModel.getAnswers().observe(this,this::onAnswersAvailable);
 
         mDisposableManager.pushDisposable(d);
     }
@@ -225,7 +193,11 @@ public class EditSecretActivity extends AppCompatActivity {
     }
 
     private void onDecodedSecretCreated(){
-        Disposable d = mKeysViewModel.getQuestions(new ArrayList<>(mDecodedSecret.getKeys()))
+        DecodedSecret decodedSecret = mEditSecretViewModel.getDecodedSecret().getValue();
+        if(decodedSecret == null)
+            throw new IllegalStateException();
+
+        Disposable d = mKeysViewModel.getQuestions(new ArrayList<>(decodedSecret.getKeys()))
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(questions -> {
@@ -253,17 +225,31 @@ public class EditSecretActivity extends AppCompatActivity {
     }
 
     private void onAnswersAvailable(@NonNull List<String> answers){
-        if(mDecodedSecret == null || answers.isEmpty() || mDecodedSecret.getKeys().size() != answers.size())
-            return;
+        DecodedSecret decodedSecret = mEditSecretViewModel.getDecodedSecret().getValue();
+
+        if(decodedSecret == null)
+            throw new IllegalStateException();
 
         mSaveButtonEnabled = false;
         mSaveButtonVisible = false;
         invalidateOptionsMenu();
 
-        List<Long> keys = new ArrayList<>(mDecodedSecret.getKeys());
-        Secret secret = new Secret(mDecodedSecret.getName(),keys);
+        List<Long> keys = new ArrayList<>(decodedSecret.getKeys());
 
-        byte[] data = mDecodedSecret.getSecret().getBytes(StandardCharsets.UTF_8);
+        Secret secret;
+        if(mCreate)
+            secret = new Secret(decodedSecret.getName(),keys);
+        else{
+            secret = new Secret();
+
+            secret.setHash(null);
+            secret.setEncodedData(null);
+            secret.setId(mSecretId);
+            secret.setKeys(keys);
+            secret.setName(decodedSecret.getName());
+        }
+
+        byte[] data = decodedSecret.getSecret().getBytes(StandardCharsets.UTF_8);
 
         Disposable d = secret.encode(data,answers)
                 .subscribeOn(Schedulers.io())
@@ -274,7 +260,11 @@ public class EditSecretActivity extends AppCompatActivity {
                     ViewModelProvider vmProvider = new ViewModelProvider(this,vmFactory);
 
                     SecretsViewModel secretsVm = vmProvider.get(SecretsViewModel.class);
-                    secretsVm.addSecret(secret);
+
+                    if(mCreate)
+                        secretsVm.addSecret(secret);
+                    else
+                        secretsVm.updateSecret(secret);
 
                     startActivity(new Intent(this,MainActivity.class));
                 },err -> {

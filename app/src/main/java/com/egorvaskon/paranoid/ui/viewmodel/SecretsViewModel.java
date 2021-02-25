@@ -27,6 +27,10 @@ public class SecretsViewModel extends AndroidViewModel {
         return AppRepository.INSTANCE.getSecretsLiveData();
     }
 
+    public void updateSecret(@NonNull Secret secret){
+        AppRepository.INSTANCE.updateSecret(secret);
+    }
+
     public Single<Secret> getSecret(long id){
         return AppRepository.INSTANCE.getSecret(id);
     }

@@ -49,4 +49,8 @@ public final class Utils {
         transaction.commit();
     }
 
+    public static boolean equals(CharSequence s1,CharSequence s2){
+        return ((s1 == null && s2 == null) || (s1 != null && s2 != null && s1.toString().equals(s1.toString())));
+    }
+
 }

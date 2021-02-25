@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -13,16 +14,18 @@ import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.egorvaskon.paranoid.Constants;
 import com.egorvaskon.paranoid.DecodedSecret;
 import com.egorvaskon.paranoid.R;
+import com.egorvaskon.paranoid.Secret;
 import com.egorvaskon.paranoid.TextChangedListener;
+import com.egorvaskon.paranoid.Utils;
+import com.egorvaskon.paranoid.ui.adapter.BaseRecyclerViewAdapterWithSelectableItems;
 import com.egorvaskon.paranoid.ui.adapter.KeysAdapter;
+import com.egorvaskon.paranoid.ui.adapter.SecretsAdapter;
 import com.egorvaskon.paranoid.ui.viewmodel.EditSecretViewModel;
 import com.egorvaskon.paranoid.ui.viewmodel.KeysViewModel;
 import com.google.android.material.textfield.TextInputEditText;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import io.reactivex.rxjava3.disposables.Disposable;
 
@@ -30,19 +33,14 @@ public class EditSecretFragment extends Fragment {
 
     public static final String ARG_SECRET = "arg_secret";
 
-    private static final int MIN_KEY_COUNT = 2;
-
-    private boolean mCreate = true;
-
-    private CharSequence mName;
-    private CharSequence mSecret;
-
     private KeysAdapter mKeysAdapter;
     private EditSecretViewModel mSharedViewModel;
 
     private DecodedSecret mDecodedSecret;
 
     private Disposable mSelectionDisposable;
+
+    private TextInputEditText mNameView,mSecretView;
 
     @NonNull
     public static EditSecretFragment newInstance(@NonNull DecodedSecret secret){
@@ -65,12 +63,10 @@ public class EditSecretFragment extends Fragment {
 
         setRetainInstance(true);
 
-        if(getArguments() != null){
-            if(getArguments().containsKey(ARG_SECRET)){
-                mCreate = false;
-                mDecodedSecret = getArguments().getParcelable(ARG_SECRET);
-            }
-        }
+        if(getArguments() != null && getArguments().containsKey(ARG_SECRET))
+            mDecodedSecret = getArguments().getParcelable(ARG_SECRET);
+        else
+            mDecodedSecret = new DecodedSecret();
     }
 
     @Nullable
@@ -83,44 +79,28 @@ public class EditSecretFragment extends Fragment {
     public void onViewCreated(@NonNull View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        TextInputEditText name = view.findViewById(R.id.new_secret_name);
-        TextInputEditText secret = view.findViewById(R.id.new_secret_information);
+        mNameView = view.findViewById(R.id.new_secret_name);
+        mSecretView = view.findViewById(R.id.new_secret_information);
         RecyclerView keys = view.findViewById(R.id.key_list);
 
-        name.addTextChangedListener(new TextChangedListener() {
+        mNameView.addTextChangedListener(new TextChangedListener() {
             @Override
             public void onTextChanged(@NonNull CharSequence text) {
                 if(mSharedViewModel != null){
-                    mName = text;
+                    mDecodedSecret.setName(text.toString());
 
-                    if(mSecret != null
-                            && !mName.toString().isEmpty()
-                            && !mSecret.toString().isEmpty()
-                            && mKeysAdapter.getCurrentSelection().size() >= MIN_KEY_COUNT){
-                        DecodedSecret decodedSecret = new DecodedSecret(mName.toString(),mSecret.toString(),mKeysAdapter.getCurrentSelection());
-                        mSharedViewModel.setDecodedSecret(decodedSecret);
-                    }
-                    else
-                        mSharedViewModel.setDecodedSecret(new DecodedSecret());
+                    mSharedViewModel.setDecodedSecret(mDecodedSecret);
                 }
             }
         });
 
-        secret.addTextChangedListener(new TextChangedListener() {
+        mSecretView.addTextChangedListener(new TextChangedListener() {
             @Override
             public void onTextChanged(@NonNull CharSequence text) {
                 if(mSharedViewModel != null){
-                    mSecret = text;
+                    mDecodedSecret.setSecret(text.toString());
 
-                    if(mName != null
-                            && !mName.toString().isEmpty()
-                            && !mSecret.toString().isEmpty()
-                            && mKeysAdapter.getCurrentSelection().size() >= MIN_KEY_COUNT){
-                        DecodedSecret decodedSecret = new DecodedSecret(mName.toString(),mSecret.toString(),mKeysAdapter.getCurrentSelection());
-                        mSharedViewModel.setDecodedSecret(decodedSecret);
-                    }
-                    else
-                        mSharedViewModel.setDecodedSecret(new DecodedSecret());
+                    mSharedViewModel.setDecodedSecret(mDecodedSecret);
                 }
             }
         });
@@ -131,15 +111,9 @@ public class EditSecretFragment extends Fragment {
         mSelectionDisposable = mKeysAdapter.getSelection()
                 .subscribe(selection -> {
                     if(mSharedViewModel != null){
-                        if(mName != null && mSecret != null
-                                && !mName.toString().isEmpty()
-                                && !mSecret.toString().isEmpty()
-                                && selection.size() >= 2){
-                            DecodedSecret decodedSecret = new DecodedSecret(mName.toString(),mSecret.toString(),selection);
-                            mSharedViewModel.setDecodedSecret(decodedSecret);
-                        }
-                        else
-                            mSharedViewModel.setDecodedSecret(new DecodedSecret());
+                        mDecodedSecret.setKeys(selection);
+
+                        mSharedViewModel.setDecodedSecret(mDecodedSecret);
                     }
                 });
 
@@ -147,11 +121,9 @@ public class EditSecretFragment extends Fragment {
         keys.addItemDecoration(new DividerItemDecoration(view.getContext(),lManager.getOrientation()));
         keys.setAdapter(mKeysAdapter);
 
-        if(!mCreate){
-            name.setText(mDecodedSecret.getName());
-            secret.setText(mDecodedSecret.getSecret());
-            mName = mDecodedSecret.getName();
-            mSecret = mDecodedSecret.getSecret();
+        if(mDecodedSecret.isValid(Constants.MIN_KEY_COUNT)){
+            mNameView.setText(mDecodedSecret.getName());
+            mSecretView.setText(mDecodedSecret.getSecret());
             mKeysAdapter.setSelection(mDecodedSecret.getKeys());
         }
     }
@@ -168,6 +140,7 @@ public class EditSecretFragment extends Fragment {
             keysVm.getKeysLiveData().observe(getViewLifecycleOwner(),keys -> mKeysAdapter.update(keys));
 
             mSharedViewModel = new ViewModelProvider(requireActivity()).get(EditSecretViewModel.class);
+            mSharedViewModel.setDecodedSecret(mDecodedSecret);
         }
     }
 
@@ -178,5 +151,7 @@ public class EditSecretFragment extends Fragment {
         mSelectionDisposable.dispose();
         mSharedViewModel = null;
         mKeysAdapter = null;
+        mSecretView = null;
+        mNameView = null;
     }
 }

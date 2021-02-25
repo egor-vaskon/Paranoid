@@ -53,6 +53,10 @@ public final class AppRepository {
                 .subscribeOn(Schedulers.io());
     }
 
+    public void updateSecret(@NonNull Secret secret){
+        mExecutor.execute(() -> mAppDatabase.secretDao().update(secret));
+    }
+
     public void addKey(Key key){
         mExecutor.execute(() -> mAppDatabase.keyDao().insert(key));
     }
