@@ -75,9 +75,6 @@ public class KeysFragment extends Fragment {
             mDoEnableDeletion = getArguments().getBoolean(ARG_DO_ENABLE_DELETION,false);
             mDoEnableSelection = getArguments().getBoolean(ARG_DO_ENABLE_SELECTION,false);
         }
-
-        if(mDoEnableDeletion)
-            setRetainInstance(true);
     }
 
     @Nullable
@@ -96,7 +93,7 @@ public class KeysFragment extends Fragment {
             LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
 
             if(mDoEnableDeletion){
-                ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelperCallbackImpl(mRecyclerView));
+                ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelperCallbackImpl());
 
                 touchHelper.attachToRecyclerView(mRecyclerView);
             }
@@ -105,43 +102,26 @@ public class KeysFragment extends Fragment {
             mRecyclerView.addItemDecoration(new DividerItemDecoration(view.getContext(),layoutManager.getOrientation()));
             mRecyclerView.setAdapter(mKeysAdapter);
         }
-    }
 
-    @Override
-    public void onSaveInstanceState(@NonNull Bundle outState) {
-        super.onSaveInstanceState(outState);
-    }
+        ViewModelProvider vmProvider = new ViewModelProvider(this,
+                new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()));
 
-    @Override
-    public void onViewStateRestored(@Nullable Bundle savedInstanceState) {
-        super.onViewStateRestored(savedInstanceState);
-    }
+        mKeysViewModel = vmProvider.get(KeysViewModel.class);
+        mKeysViewModel.getKeysLiveData().observe(getViewLifecycleOwner(),keys -> {
+            if(mKeysAdapter != null)
+                mKeysAdapter.update(keys);
+        });
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+        mKeyDeleteDisposable
+                = mKeysAdapter.getEventStream().filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.REMOVE_ITEM)
+                .subscribe(e -> mDisposableManager.pushDisposable(deleteKey(e.itemId)
+                        .subscribeOn(Schedulers.io())
+                        .observeOn(AndroidSchedulers.mainThread())
+                        .subscribe()));
 
-        if(getActivity() != null){
-            ViewModelProvider vmProvider = new ViewModelProvider(this,
-                    new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication()));
-
-            mKeysViewModel = vmProvider.get(KeysViewModel.class);
-            mKeysViewModel.getKeysLiveData().observe(getViewLifecycleOwner(),keys -> {
-                if(mKeysAdapter != null)
-                    mKeysAdapter.update(keys);
-            });
-
-            mKeyDeleteDisposable
-                    = mKeysAdapter.getEventStream().filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.REMOVE_ITEM)
-                    .subscribe(e -> mDisposableManager.pushDisposable(deleteKey(e.itemId)
-                            .subscribeOn(Schedulers.io())
-                            .observeOn(AndroidSchedulers.mainThread())
-                            .subscribe()));
-
-            mClickDisposable
-                    = mKeysAdapter.getEventStream().filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.ITEM_CLICK)
-                    .subscribe(e -> onItemClick(e.itemId));
-        }
+        mClickDisposable
+                = mKeysAdapter.getEventStream().filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.ITEM_CLICK)
+                .subscribe(e -> onItemClick(e.itemId));
     }
 
     private void onItemClick(long id){
@@ -150,11 +130,13 @@ public class KeysFragment extends Fragment {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(key -> {
-            if(getFragmentManager() != null){
-                EditKeyDialogFragment dialog = EditKeyDialogFragment.newInstance(key.getId(),key.getName(),key.getQuestion());
-                dialog.show(getFragmentManager(), MainActivity.EDIT_QUESTION_FRAGMENT_TAG);
-            }
-        }));
+                    EditKeyDialogFragment dialog = EditKeyDialogFragment.
+                            newInstance(
+                                    key.getId(),
+                                    key.getName(),
+                                    key.getQuestion());
+                    dialog.show(getParentFragmentManager(), MainActivity.EDIT_QUESTION_FRAGMENT_TAG);
+                }));
     }
 
     @NonNull

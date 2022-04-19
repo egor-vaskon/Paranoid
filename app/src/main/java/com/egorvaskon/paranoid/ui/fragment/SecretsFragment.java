@@ -73,7 +73,7 @@ public class SecretsFragment extends Fragment {
             mSecretsAdapter = new SecretsAdapter(view.getContext(),true,false);
             LinearLayoutManager layoutManager = new LinearLayoutManager(view.getContext());
 
-            ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelperCallbackImpl(mRecyclerView));
+            ItemTouchHelper touchHelper = new ItemTouchHelper(new ItemTouchHelperCallbackImpl());
 
             touchHelper.attachToRecyclerView(mRecyclerView);
 
@@ -82,34 +82,27 @@ public class SecretsFragment extends Fragment {
 
             mRecyclerView.setAdapter(mSecretsAdapter);
         }
-    }
 
-    @Override
-    public void onActivityCreated(@Nullable Bundle savedInstanceState) {
-        super.onActivityCreated(savedInstanceState);
+        ViewModelProvider vmProvider = new ViewModelProvider(this,
+                new ViewModelProvider.AndroidViewModelFactory(requireActivity().getApplication()));
 
-        if(getActivity() != null){
-            ViewModelProvider vmProvider = new ViewModelProvider(this,
-                    new ViewModelProvider.AndroidViewModelFactory(getActivity().getApplication()));
+        mSecretsViewModel = vmProvider.get(SecretsViewModel.class);
+        mSecretsViewModel.getSecretsLiveData().observe(getViewLifecycleOwner(),secrets -> {
+            if(mSecretsAdapter != null)
+                mSecretsAdapter.update(secrets);
+        });
 
-            mSecretsViewModel = vmProvider.get(SecretsViewModel.class);
-            mSecretsViewModel.getSecretsLiveData().observe(getViewLifecycleOwner(),secrets -> {
-                if(mSecretsAdapter != null)
-                    mSecretsAdapter.update(secrets);
-            });
+        mKeysViewModel = vmProvider.get(KeysViewModel.class);
 
-            mKeysViewModel = vmProvider.get(KeysViewModel.class);
+        mDisposableManager.pushDisposable(mSecretsAdapter
+                .getEventStream()
+                .filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.REMOVE_ITEM)
+                .subscribe(e -> mSecretsViewModel.deleteSecret(e.itemId)));
 
-            mDisposableManager.pushDisposable(mSecretsAdapter
-                    .getEventStream()
-                    .filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.REMOVE_ITEM)
-                    .subscribe(e -> mSecretsViewModel.deleteSecret(e.itemId)));
-
-            mDisposableManager.pushDisposable(mSecretsAdapter
-                    .getEventStream()
-                    .filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.ITEM_CLICK)
-                    .subscribe(e -> onItemClick(e.itemId)));
-        }
+        mDisposableManager.pushDisposable(mSecretsAdapter
+                .getEventStream()
+                .filter(e -> e.code == BaseRecyclerViewAdapterWithSelectableItems.Message.ITEM_CLICK)
+                .subscribe(e -> onItemClick(e.itemId)));
     }
 
     private void onItemClick(long itemId){
@@ -125,7 +118,7 @@ public class SecretsFragment extends Fragment {
         mDecodingQuizViewModel = new ViewModelProvider(requireActivity()).get(DECODING_QUIZ,QuizViewModel.class);
 
         QuizDialog quizDialog = QuizDialog.newInstance(DECODING_QUIZ,questions);
-        quizDialog.show(requireFragmentManager(),DECODING_QUIZ_DIALOG_TAG);
+        quizDialog.show(getParentFragmentManager(),DECODING_QUIZ_DIALOG_TAG);
 
         mDecodingQuizViewModel.getAnswers().observe(requireActivity(),answers -> {
             if(answers != null)
